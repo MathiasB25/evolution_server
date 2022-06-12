@@ -131,7 +131,7 @@ const getWallet = async (req, res) => {
     if (String(user).match(/^[0-9a-fA-F]{24}$/)) {
         const tokens = await Token.find({ user })
         if (tokens == '') {
-            res.json({ msg: 'Billeteria vacía' })
+            res.json(tokens)
             return
         }
 

@@ -14,9 +14,9 @@ const register = async (req, res) => {
 
     try {
         const user = new User(req.body)
-        user.token = createToken()
+        /* user.token = createToken() */
         await user.save()
-        res.status(200).json({ msg: 'Usuario creado correctamente, revisa tu email para confirmar tu cuenta' })
+        res.status(200).json({ msg: 'Usuario creado correctamente' })
     } catch (error) {
         console.log(error)
     }

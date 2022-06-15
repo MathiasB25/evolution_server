@@ -1,4 +1,26 @@
+import axios from 'axios'
 import Token from '../models/Token.js'
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+let tokens = []
+const firstFetch = async () => {
+    const { data } = await axios(`https://api.nomics.com/v1/currencies/ticker?key=${process.env.NOMICS_KEY}&ids=&interval=1d,30d&convert=USD`)
+    tokens = data
+}
+const fetchAPI = async () => {
+    const { data } = await axios(`https://api.nomics.com/v1/currencies/ticker?key=${process.env.NOMICS_KEY}&ids=&interval=1d,30d&convert=USD`)
+    tokens = data
+} 
+firstFetch()
+setInterval( () => {
+    fetchAPI()
+}, 10000)
+
+const currencies = async (req, res) => {
+    res.json(tokens)
+}
 
 const deposit = async (req, res) => {
     const { user, symbol, amount, price } = req.body
@@ -99,6 +121,7 @@ const sell = async (req, res) => {
 }
 
 export {
+    currencies,
     deposit,
     buy,
     sell

@@ -67,6 +67,7 @@ const buy = async (req, res) => {
                     busd[0].amount = busd[0].amount - (Number(amount) * Number(price))
                     await busd[0].save()
                     await token[0].save()
+                    await Promise.all([busd[0].save(), token[0].save()])
                     res.json(tokens)
                 } catch (error) {
                     res.json({ msg: 'Hubo un problema al procesar la solicitud' })
@@ -76,8 +77,9 @@ const buy = async (req, res) => {
                 const token = new Token(req.body)
                 try {
                     busd[0].amount = busd[0].amount - (Number(amount) * Number(price))
-                    await busd[0].save()
-                    await token.save()
+                    /* await busd[0].save()
+                    await token.save() */
+                    await Promise.all([busd[0].save(), token.save()])
                     tokens.push(token)
                     res.json(tokens)
                 } catch (error) {
@@ -106,8 +108,9 @@ const sell = async (req, res) => {
                 const busd = tokens.filter(token => token.symbol === 'BUSD')
                 busd[0].amount = busd[0].amount + (Number(amount) * Number(price))
                 token[0].amount = (token[0].amount - Number(amount))
-                await busd[0].save()
-                await token[0].save()
+                /* await busd[0].save()
+                await token[0].save() */
+                await Promise.all([busd[0].save(), token[0].save()])
                 res.json(tokens)
             } else {
                 /* User token amount < to sell amount  */
@@ -120,9 +123,43 @@ const sell = async (req, res) => {
     }
 }
 
+const swap = async (req, res) => {
+    const { symbolFrom, priceFrom, valueFrom, nameTo, symbolTo, priceTo, convert, user } = req.body
+    if (user.match(/^[0-9a-fA-F]{24}$/)) {
+        const tokens = await Token.find({ user })
+        const fromToken = tokens.filter(token => token.symbol === symbolFrom)
+        const toToken = tokens.filter(token => token.symbol === symbolTo)
+        /* Check if tokens are in the user wallet */
+        if(fromToken.length > 0) {
+            /* Check if the swap amount is < to the token value in the wallet */
+            if(valueFrom < fromToken[0].amount) {
+                fromToken[0].amount = fromToken[0].amount - Number(valueFrom)
+                fromToken[0].price = priceFrom
+                if(toToken.length === 0) {
+                    const newToken = new Token({ name: nameTo, symbol: symbolTo, price: priceTo, amount: convert, user })
+                    await Promise.all([fromToken[0].save(), newToken.save()])
+                    tokens.push(newToken)
+                    res.json(tokens)
+                } else {
+                    toToken[0].amount = toToken[0].amount + Number(convert)
+                    toToken[0].price = priceTo
+                    await Promise.all([fromToken[0].save(), toToken[0].save()])
+                    res.json(tokens)
+                }
+            } else {
+                res.json('Saldo insuficiente')
+            }
+        } else {
+            /* If not */
+            res.json('Saldo insuficiente')
+        }
+    }
+}
+
 export {
     currencies,
     deposit,
     buy,
-    sell
+    sell,
+    swap
 }

@@ -36,6 +36,12 @@ const authenticate = async (req, res) => {
         const error = new Error('Debes confirmar tu cuenta')
         return res.status(400).json({ msg: error.message })
     }
+    /* Check if user account is disabled */
+    if(user.disabled) {
+        const error = new Error('Esta cuenta se encuentra desactivada')
+        return res.status(403).json({ msg: error.message })
+    }
+
     if(await user.checkPassword(password)) {
         res.json({
             _id: user._id,
@@ -141,6 +147,49 @@ const getWallet = async (req, res) => {
     }
 }
 
+const editProfile = async (req, res) => {
+    const { name, email, password, userId } = req.body
+
+    if (String(userId).match(/^[0-9a-fA-F]{24}$/)) {
+        const user = await User.findOne({ userId })
+        if(!user) {
+            return
+        }
+
+        if (String(name).length < 20) {
+            try {
+                user.name = name
+                user.email = email
+                user.password = password
+                await user.save()
+                res.json(user)
+            } catch (error) {
+                res.json({ msg: 'Hubo un error al guardar los cambios' })
+            }
+
+        }
+    }
+}
+
+const disable = async (req, res) => {
+    const { _id } = req.body
+
+    if(String(_id).match(/^[0-9a-fA-F]{24}$/)) {
+        const user = await User.findOne({ _id })
+        if(user) {
+            console.log(user)
+            user.disabled = true
+            try {
+                await user.save()
+                res.json({ msg: 'Has desactivado tu cuenta correctamente'})
+            } catch (error) {
+                console.log(error)
+                res.json({ msg: 'Hubo un problema al desactivar tu cuenta' })   
+            }
+        }
+    }
+}
+
 export {
     register,
     authenticate,
@@ -149,5 +198,7 @@ export {
     checkToken,
     newPassword,
     profile,
-    getWallet
+    getWallet,
+    editProfile,
+    disable
 }

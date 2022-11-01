@@ -6,17 +6,33 @@ dotenv.config()
 
 let tokens = []
 const firstFetch = async () => {
-    const { data } = await axios(`https://api.nomics.com/v1/currencies/ticker?key=${process.env.NOMICS_KEY}&ids=&interval=1d,30d&convert=USD`)
-    tokens = data
+    const { data } = await axios(`${process.env.CRYPTO_API_URL}/cryptocurrency/listings/latest`, {headers: {'X-CMC_PRO_API_KEY': process.env.CRYPTO_API_KEY}})
+    const { data: tokensData } = data;
+    tokens = tokensData.map(token => ({ 
+        id: token.id,
+        symbol: token.symbol,
+        name: token.name,
+        price: token.quote.USD.price,
+        market_cap: token.quote.USD.market_cap,
+        price_change_pct: token.quote.USD.percent_change_24h
+    }))
 }
 const fetchAPI = async () => {
-    const { data } = await axios(`https://api.nomics.com/v1/currencies/ticker?key=${process.env.NOMICS_KEY}&ids=&interval=1d,30d&convert=USD`)
-    tokens = data
+    const { data } = await axios(`${process.env.CRYPTO_API_URL}/cryptocurrency/listings/latest`, {headers: {'X-CMC_PRO_API_KEY': process.env.CRYPTO_API_KEY}})
+    const { data: tokensData } = data;
+    tokens = tokensData.map(token => ({ 
+        id: token.id,
+        symbol: token.symbol,
+        name: token.name,
+        price: token.quote.USD.price,
+        market_cap: token.quote.USD.market_cap,
+        price_change_pct: token.quote.USD.percent_change_24h
+    }))
 } 
 firstFetch()
 setInterval( () => {
     fetchAPI()
-}, 10000)
+}, 300000)
 
 const currencies = async (req, res) => {
     res.json(tokens)
